@@ -1,5 +1,6 @@
 // Adapted from http://stackoverflow.com/questions/18563877/struggling-to-implement-simple-boostgraph-traversal
 
+#include <stdexcept>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/visitors.hpp>
@@ -26,24 +27,18 @@ class my_visitor : public boost::default_dfs_visitor
 {
 public:
   my_visitor(const int t_now)
-   : m_has_extant_descendant{false},
-     m_t_target{t_now} {}
+   : m_t_target{t_now} {}
   void discover_vertex(phylogeny_vd vd, const phylogeny& g)
   {
     const auto t_here = g[vd].m_t;
     std::cout << t_here << std::endl;
     if (t_here == m_t_target)
     {
-      std::cout << "YAY" << std::endl;
-      m_has_extant_descendant = true;
+      throw std::runtime_error("found an extant descendant");
     }
   }
 
-  bool has_extant_descendant() const noexcept { return m_has_extant_descendant; }
-
 private:
-
-  bool m_has_extant_descendant;
 
   ///The generation at the current time
   const int m_t_target;
@@ -77,13 +72,28 @@ phylogeny create_phylogeny()
   return p;
 }
 
+bool has_extant_descendant(
+  const phylogeny& p,
+  const int t_end
+)
+{
+  try
+  {
+    my_visitor v(t_end);
+    boost::depth_first_search(
+      p,
+      boost::visitor(v)
+    );
+    return false;
+  }
+  catch (std::runtime_error&)
+  {
+    return true;
+  }
+}
+
 int main()
 {
   const phylogeny p = create_phylogeny();
-  my_visitor v(3);
-  boost::depth_first_search(
-    p,
-    boost::visitor(v)
-  );
-  assert(v.has_extant_descendant());
+  assert(has_extant_descendant(p, 3));
 }
