@@ -8,8 +8,10 @@
 
 struct Node
 {
-  Node(const int t = 0) : m_t{t} {}
+  Node(const int t = 0, const std::string& name = "")
+    : m_t{t}, m_name{name} {}
   int m_t;
+  std::string m_name;
 };
 
 /// A phylogeny is a graph of Node of different generations
@@ -22,6 +24,7 @@ using phylogeny = boost::adjacency_list<
 >;
 
 using phylogeny_vd = boost::graph_traits<phylogeny>::vertex_descriptor;
+//using color_map_t = boost::property_map<phylogeny, boost::vertex_color_t>::type;
 
 class my_visitor : public boost::default_dfs_visitor
 {
@@ -58,12 +61,12 @@ private:
 phylogeny create_phylogeny()
 {
   phylogeny p;
-  const auto a = boost::add_vertex(Node(0), p);
-  const auto b = boost::add_vertex(Node(1), p);
-  const auto c = boost::add_vertex(Node(2), p);
-  const auto d = boost::add_vertex(Node(3), p);
-  const auto e = boost::add_vertex(Node(1), p);
-  const auto f = boost::add_vertex(Node(2), p);
+  const auto a = boost::add_vertex(Node(0, "a"), p);
+  const auto b = boost::add_vertex(Node(1, "b"), p);
+  const auto c = boost::add_vertex(Node(2, "c"), p);
+  const auto d = boost::add_vertex(Node(3, "d"), p);
+  const auto e = boost::add_vertex(Node(1, "e"), p);
+  const auto f = boost::add_vertex(Node(2, "f"), p);
   boost::add_edge(a, b, p);
   boost::add_edge(b, c, p);
   boost::add_edge(c, d, p);
@@ -73,16 +76,30 @@ phylogeny create_phylogeny()
 }
 
 bool has_extant_descendant(
+  const phylogeny_vd vd,
   const phylogeny& p,
   const int t_end
 )
 {
+  //color_map_t m;
+  std::vector<boost::default_color_type> color_map(boost::num_vertices(p));
+  auto filled_color_map = boost::make_iterator_property_map(
+    color_map.begin(),
+    boost::get(boost::vertex_index, p),
+    color_map[0]
+  );
+  //std::vector<Node> color_map(
+  //  boost::num_vertices(p));
   try
   {
     my_visitor v(t_end);
+    //From boost:
+    //depth_first_search(g, vis, color, detail::get_default_starting_vertex(g));
     boost::depth_first_search(
       p,
-      boost::visitor(v)
+      v, //boost::make_dfs_visitor(v),
+      filled_color_map,
+      vd
     );
     return false;
   }
@@ -95,5 +112,14 @@ bool has_extant_descendant(
 int main()
 {
   const phylogeny p = create_phylogeny();
-  assert(has_extant_descendant(p, 3));
+  {
+    const auto vd_b = boost::vertex(1, p);
+    assert(p[vd_b].m_name == "b");
+    assert(has_extant_descendant(vd_b, p, 3));
+  }
+  {
+    const auto vd_e = boost::vertex(4, p);
+    assert(p[vd_e].m_name == "e");
+    assert(has_extant_descendant(vd_e, p, 3));
+  }
 }
