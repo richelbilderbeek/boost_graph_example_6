@@ -19,12 +19,11 @@ struct Node
 using phylogeny = boost::adjacency_list<
   boost::vecS,
   boost::vecS,
-  boost::undirectedS,
+  boost::directedS,
   Node
 >;
 
 using phylogeny_vd = boost::graph_traits<phylogeny>::vertex_descriptor;
-//using color_map_t = boost::property_map<phylogeny, boost::vertex_color_t>::type;
 
 class my_visitor : public boost::default_dfs_visitor
 {
@@ -85,6 +84,19 @@ bool has_extant_descendant(
   {
     std::vector<boost::default_color_type> color_map(boost::num_vertices(p));
     my_visitor v(t_end);
+
+    boost::depth_first_visit(
+      p,
+      vd,
+      v,
+      //color map
+      boost::make_iterator_property_map(
+        std::begin(color_map),
+        boost::get(boost::vertex_index, p),
+        color_map[0]
+      )
+    );
+    /*
     boost::depth_first_search(
       p,
       v,
@@ -96,6 +108,7 @@ bool has_extant_descendant(
       ),
       vd
     );
+    */
     return false;
   }
   catch (std::runtime_error&)
@@ -112,9 +125,10 @@ int main()
     assert(p[vd_b].m_name == "b");
     assert(has_extant_descendant(vd_b, p, 3));
   }
+  std::cout << '\n';
   {
     const auto vd_e = boost::vertex(4, p);
     assert(p[vd_e].m_name == "e");
-    assert(has_extant_descendant(vd_e, p, 3));
+    assert(!has_extant_descendant(vd_e, p, 3));
   }
 }
