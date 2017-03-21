@@ -25,13 +25,32 @@ using phylogeny_vd = boost::graph_traits<phylogeny>::vertex_descriptor;
 class my_visitor : public boost::default_dfs_visitor
 {
 public:
-  void discover_vertex(phylogeny_vd vd, const phylogeny& g) const
+  my_visitor(const int t_now)
+   : m_has_extant_descendant{false},
+     m_t_target{t_now} {}
+  void discover_vertex(phylogeny_vd vd, const phylogeny& g)
   {
-    std::cout << g[vd].m_t << std::endl;
+    const auto t_here = g[vd].m_t;
+    std::cout << t_here << std::endl;
+    if (t_here == m_t_target)
+    {
+      std::cout << "YAY" << std::endl;
+      m_has_extant_descendant = true;
+    }
   }
+
+  bool has_extant_descendant() const noexcept { return m_has_extant_descendant; }
+
+private:
+
+  bool m_has_extant_descendant;
+
+  ///The generation at the current time
+  const int m_t_target;
 };
 
-//Create a phylogeny
+//Create a phylogeny in which b has an extant relative,
+// and e has not
 //
 //        b---c---d
 //        |
@@ -54,15 +73,17 @@ phylogeny create_phylogeny()
   boost::add_edge(b, c, p);
   boost::add_edge(c, d, p);
   boost::add_edge(a, e, p);
+  boost::add_edge(e, f, p);
   return p;
 }
 
 int main()
 {
   const phylogeny p = create_phylogeny();
-  my_visitor v;
+  my_visitor v(3);
   boost::depth_first_search(
     p,
     boost::visitor(v)
   );
+  assert(v.has_extant_descendant());
 }
