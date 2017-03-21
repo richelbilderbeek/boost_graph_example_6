@@ -81,24 +81,19 @@ bool has_extant_descendant(
   const int t_end
 )
 {
-  //color_map_t m;
-  std::vector<boost::default_color_type> color_map(boost::num_vertices(p));
-  auto filled_color_map = boost::make_iterator_property_map(
-    color_map.begin(),
-    boost::get(boost::vertex_index, p),
-    color_map[0]
-  );
-  //std::vector<Node> color_map(
-  //  boost::num_vertices(p));
   try
   {
+    std::vector<boost::default_color_type> color_map(boost::num_vertices(p));
     my_visitor v(t_end);
-    //From boost:
-    //depth_first_search(g, vis, color, detail::get_default_starting_vertex(g));
     boost::depth_first_search(
       p,
-      v, //boost::make_dfs_visitor(v),
-      filled_color_map,
+      v,
+      //color map
+      boost::make_iterator_property_map(
+        std::begin(color_map),
+        boost::get(boost::vertex_index, p),
+        color_map[0]
+      ),
       vd
     );
     return false;
