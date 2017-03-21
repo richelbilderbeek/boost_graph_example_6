@@ -36,6 +36,7 @@ public:
     std::cout << t_here << std::endl;
     if (t_here == m_t_target)
     {
+      // must terminate a search by throwing an exception
       throw std::runtime_error("found an extant descendant");
     }
   }
@@ -49,11 +50,11 @@ private:
 //Create a phylogeny in which b has an extant relative,
 // and e has not
 //
-//        b---c---d
+//        b-->c-->d
 //        |
-//    a---+
+//    a-->+
 //        |
-//        e---f
+//        e-->f
 //
 // ---+---+---+---+---
 //    0   1   2   3  t (generation)
@@ -96,23 +97,11 @@ bool has_extant_descendant(
         color_map[0]
       )
     );
-    /*
-    boost::depth_first_search(
-      p,
-      v,
-      //color map
-      boost::make_iterator_property_map(
-        std::begin(color_map),
-        boost::get(boost::vertex_index, p),
-        color_map[0]
-      ),
-      vd
-    );
-    */
     return false;
   }
   catch (std::runtime_error&)
   {
+    // depth_first_visit is terminated by an exception
     return true;
   }
 }
