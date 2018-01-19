@@ -106,6 +106,8 @@ bool has_extant_descendant(
   }
 }
 
+/// Showing the (timepoint of) vertices that are descended
+/// from an ancestor vertex, using a depth-first search
 int main()
 {
   const phylogeny p = create_phylogeny();
